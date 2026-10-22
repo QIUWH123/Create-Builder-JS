@@ -20,6 +20,15 @@ build
 # other
 eclipse
 run
+run-data
+/logs/
+/docs/
+/kubejs/
+/tools/
+/AGENTS.md
+libs/*.jar
+__pycache__/
+.DS_Store
 
 # Files from Forge MDK
 forge*changelog.txt

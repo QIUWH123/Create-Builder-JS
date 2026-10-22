@@ -66,6 +66,30 @@ description='''${mod_description}'''
     ordering="NONE"
     side="BOTH"
 
+# This mod is a Create addon and loads after Create on both sides.
+[[dependencies.${mod_id}]]
+    modId="create"
+    mandatory=true
+    versionRange="${create_version_range}"
+    ordering="AFTER"
+    side="BOTH"
+
+# Block registration and the native scripting API use KubeJS on both sides.
+[[dependencies.${mod_id}]]
+    modId="kubejs"
+    mandatory=true
+    versionRange="[2001.6.5-build.26,2001.7)"
+    ordering="AFTER"
+    side="BOTH"
+
+# Chainable cogwheels reuse Bits 'n' Bobs only when it is installed.
+[[dependencies.${mod_id}]]
+    modId="bits_n_bobs"
+    mandatory=false
+    versionRange="[0.0.41,0.0.42)"
+    ordering="AFTER"
+    side="BOTH"
+
 # Features are specific properties of the game environment, that you may want to declare you require. This example declares
 # that your mod requires GL version 3.2 or higher. Other features will be added. They are side aware so declaring this won't
 # stop your mod loading on the server for example.

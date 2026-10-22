@@ -1,0 +1,23 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "net.quiwh.cbjs.compat.bnb.mixin",
+  "plugin": "net.quiwh.cbjs.compat.bnb.BnbChainMixinPlugin",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [
+    "BnbChainPlacementMixin",
+    "BnbChainBlockMixin",
+    "BnbCogwheelChainMixin",
+    "customchain.BnbChainPacketMixin",
+    "customchain.BnbChainDataMixin",
+    "customchain.BnbChainEntityMixin"
+  ],
+  "client": [
+    "customchain.BnbChainInteractionMixin",
+    "customchain.BnbChainPreviewMixin",
+    "customchain.BnbChainRendererMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

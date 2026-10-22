@@ -75,6 +75,14 @@ minecraft {
             // Please read: https://stackoverflow.com/questions/2031163/when-to-use-the-different-log-levels
             property 'forge.logging.console.level', 'debug'
 
+            // Remap Create/Ponder dependency mixins to this workspace's development names.
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${buildDir}/createSrgToMcp/output.srg"
+
+            // Load compatibility mixins when running directly from IntelliJ/Gradle.
+            args '--mixin.config', "${mod_id}.mixins.json"
+            args '--mixin.config', "${mod_id}-bnb.mixins.json"
+
             mods {
                 "${mod_id}" {
                     source sourceSets.main
@@ -113,6 +121,26 @@ minecraft {
 sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 repositories {
+    // Pinned development JARs supplied in libs/; see the README for filenames.
+    flatDir {
+        dirs 'libs'
+        content { includeGroup 'local.dev' }
+    }
+    maven {
+        name = 'Create'
+        url = 'https://maven.createmod.net'
+        content {
+            includeGroup 'com.simibubi.create'
+            includeGroup 'net.createmod.ponder'
+            includeGroup 'dev.engine-room.flywheel'
+        }
+    }
+    maven {
+        name = 'Registrate'
+        url = 'https://maven.tterrag.com'
+        content { includeGroup 'com.tterrag.registrate' }
+    }
+
     // Put repositories for dependencies here
     // ForgeGradle automatically adds the Forge maven and Maven Central for you
 
@@ -131,11 +159,32 @@ dependencies {
     // then special handling is done to allow a setup of a vanilla dependency without the use of an external repository.
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
 
-    // Example mod dependency with JEI - using fg.deobf() ensures the dependency is remapped to your development mappings
-    // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
-    // compileOnly fg.deobf("mezz.jei:jei-${mc_version}-common-api:${jei_version}")
-    // compileOnly fg.deobf("mezz.jei:jei-${mc_version}-forge-api:${jei_version}")
-    // runtimeOnly fg.deobf("mezz.jei:jei-${mc_version}-forge:${jei_version}")
+    // fg.deobf remaps mod libraries to this project's development mappings.
+    // Use released Create without bundled JARs; dependencies are declared explicitly below.
+    implementation(fg.deobf("local.dev:create-${minecraft_version}:${create_version}:slim")) {
+        transitive = false
+    }
+    implementation fg.deobf("net.createmod.ponder:Ponder-Forge-${minecraft_version}:${ponder_version}")
+    implementation fg.deobf("com.tterrag.registrate:Registrate:${registrate_version}")
+    compileOnly fg.deobf("dev.engine-room.flywheel:flywheel-forge-api-${minecraft_version}:${flywheel_version}")
+    runtimeOnly fg.deobf("dev.engine-room.flywheel:flywheel-forge-${minecraft_version}:${flywheel_version}")
+
+    // Compile local-capture annotations; the Forge runtime is also bundled by full Create releases.
+    compileOnly "io.github.llamalad7:mixinextras-common:${mixinextras_version}"
+    runtimeOnly "io.github.llamalad7:mixinextras-forge:${mixinextras_version}"
+
+    // Module notation is required: ForgeGradle cannot deobfuscate files(...) dependencies.
+    implementation fg.deobf('local.dev:kubejs-forge:2001.6.5-build.26')
+    implementation fg.deobf('local.dev:rhino-forge:2001.2.3-build.10')
+    runtimeOnly fg.deobf('local.dev:architectury:9.2.14')
+
+    // Optional chainable cogwheel compatibility; this dependency is not bundled in our jar.
+    implementation fg.deobf('local.dev:bits_n_bobs:0.0.41')
+
+    // Development helpers supplied in libs/ at the pinned versions below.
+    runtimeOnly fg.deobf('local.dev:probejs-forge:6.0.1')
+    runtimeOnly fg.deobf('local.dev:jei-1.20.1-forge:15.56.0.205')
+    runtimeOnly fg.deobf('local.dev:Jade-1.20.1-Forge:11.13.3')
 
     // Example mod dependency using a mod jar from ./libs with a flat dir repository
     // This maps to ./libs/coolmod-${mc_version}-${coolmod_version}.jar
@@ -152,10 +201,13 @@ dependencies {
 // When "copyIdeResources" is enabled, this will also run before the game launches in IDE environments.
 // See https://docs.gradle.org/current/dsl/org.gradle.language.jvm.tasks.ProcessResources.html
 tasks.named('processResources', ProcessResources).configure {
+    dependsOn 'installDevCBJSScripts'
+    exclude '**/.DS_Store'
     var replaceProperties = [
             minecraft_version: minecraft_version, minecraft_version_range: minecraft_version_range,
             forge_version: forge_version, forge_version_range: forge_version_range,
             loader_version_range: loader_version_range,
+            create_version_range: create_version_range,
             mod_id: mod_id, mod_name: mod_name, mod_license: mod_license, mod_version: mod_version,
             mod_authors: mod_authors, mod_description: mod_description,
     ]
@@ -170,6 +222,7 @@ tasks.named('processResources', ProcessResources).configure {
 tasks.named('jar', Jar).configure {
     manifest {
         attributes([
+                'MixinConfigs'            : "${mod_id}.mixins.json,${mod_id}-bnb.mixins.json",
                 'Specification-Title'     : mod_id,
                 'Specification-Vendor'    : mod_authors,
                 'Specification-Version'   : '1', // We are version 1 of ourselves
@@ -205,4 +258,40 @@ publishing {
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
+}
+
+// Server scripts stay linked to the project so saved edits take effect with /reload.
+// The shared installer also copies startup scripts and custom assets.
+tasks.register('installDevCBJSScripts', Exec) {
+    onlyIf { file('tools/prepare_kubejs_dev.py').isFile() && file('kubejs').isDirectory() }
+    workingDir project.projectDir
+    commandLine 'python3', 'tools/prepare_kubejs_dev.py', '--scripts-only'
+}
+
+// Keep the earlier task name usable from saved IntelliJ configurations.
+tasks.register('installDevGearLimits') { dependsOn 'installDevCBJSScripts' }
+
+tasks.register('testKineticLimits', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'net.quiwh.cbjs.kinetics.KineticLimitsTest'
+}
+
+// Local docs/scripts stay private unless a development bundle is explicitly requested.
+tasks.register('cbjsDistribution', Zip) {
+    dependsOn 'reobfJar'
+    archiveClassifier = 'modpack'
+    from(tasks.named('jar')) { into 'mods' }
+    from('README.md')
+    if (providers.gradleProperty('includeLocalDevFiles').map { it.toBoolean() }.getOrElse(false)) {
+        from('kubejs') { into 'kubejs'; exclude '**/.DS_Store' }
+        def documentManifest = file('docs/distribution-documents.txt')
+        if (documentManifest.isFile()) {
+            from('docs') {
+                into 'docs'
+                include documentManifest.readLines('UTF-8')
+                        .collect { it.trim() }.findAll { it && !it.startsWith('#') }
+            }
+        }
+    }
 }
