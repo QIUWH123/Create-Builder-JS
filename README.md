@@ -17,7 +17,8 @@ not required.
 
 ## Usage
 
-Install CBJS and its required dependencies on the client and server. Content is
+Download CBJS from [Releases](https://github.com/QIUWH123/Create-Builder-JS/releases)
+and install it with its required dependencies on the client and server. Content is
 defined by the pack's scripts; registering a block does not add a crafting recipe.
 For example, put this in `kubejs/startup_scripts/` and restart:
 
