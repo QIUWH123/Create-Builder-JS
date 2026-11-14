@@ -1,0 +1,62 @@
+{
+  "purpose": "Separately acquired pinned development inputs; no dependency JARs are redistributed.",
+  "directories": {
+    "libs/runtime": "Required development implementation/runtime inputs.",
+    "libs/compile": "Compile inputs and required Create runtime support.",
+    "libs/optional": "Optional integration compile inputs; loaded in development only with devIntegrations."
+  },
+  "dependencies": [
+    {
+      "path": "libs/compile/Registrate-MC1.21-1.3.0+67.jar",
+      "sha256": "510f4041c41739f1d8ea8850ab8364d3e3a5fada8529beed5d9f479e2523db52"
+    },
+    {
+      "path": "libs/compile/annotations-24.0.1.jar",
+      "sha256": "61666dbce7e42e6c85b43c04fcfb8293a21dcb55b3c80e869270ce42c01a6b35"
+    },
+    {
+      "path": "libs/compile/cc-tweaked-1.21.1-forge-1.116.0.jar",
+      "sha256": "3ed8e6f0b8519f01f01f4bbc8d1720a63d165a879725af66c4b860c2a90d5709"
+    },
+    {
+      "path": "libs/compile/flywheel-neoforge-1.21.1-1.0.6.jar",
+      "sha256": "31dda15c205eb596d3b3449ef03f6af7363a6cd35b3da4bfe916b304f9e5337e"
+    },
+    {
+      "path": "libs/compile/ponder-neoforge-1.0.82+mc1.21.1.jar",
+      "sha256": "0cf4611ad853042b689ac386184c5bbe02950efcffddb49e5f604e82baddb0dc"
+    },
+    {
+      "path": "libs/optional/ProbeJS-8.0.3.jar",
+      "sha256": "afb957ce00611cfc7de4bb33ac1ac8ea1d880c741ac14b9c67876b207b1377e7"
+    },
+    {
+      "path": "libs/optional/azimuth-1.4.10.jar",
+      "sha256": "e9f56d10a6ae56c8d02d2e9e1668c7b70d545d8e20cf4972f0710e9b01989d8a"
+    },
+    {
+      "path": "libs/optional/bits_n_bobs-2.3.5.jar",
+      "sha256": "3e1647383c6ed1d629b6f20210179d5870bcbf8ba2a2a0ec58af69b53513db68"
+    },
+    {
+      "path": "libs/optional/jei-1.21.1-neoforge-19.64.0.455.jar",
+      "sha256": "f7a9de3d7ee07eed8d293a1a1a0f6afaac556eb43c103523457bd07ebb551e7b"
+    },
+    {
+      "path": "libs/optional/struts-1.3.1.jar",
+      "sha256": "21002a8b6881a3d08da74f03f29ab23551db50d755d7e75b8b94847511d9a863"
+    },
+    {
+      "path": "libs/runtime/create-1.21.1-6.0.10.jar",
+      "sha256": "ef87fe5709f1ba1f5b8bb20a2925b5afb4669e178fd6d8bf10c167759eefe37a"
+    },
+    {
+      "path": "libs/runtime/kubejs-neoforge-2101.7.2-build.377.jar",
+      "sha256": "43b656bc2d4ce867141abb828c9481f080a38585b99bcfa07e54732a4976a601"
+    },
+    {
+      "path": "libs/runtime/rhino-2101.2.7-build.85.jar",
+      "sha256": "95df92ce578b2504cb16d8c9fc285303bf062eb15452246a18e57b7cf091c19a"
+    }
+  ]
+}

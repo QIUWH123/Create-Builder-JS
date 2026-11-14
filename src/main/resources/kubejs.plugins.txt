@@ -1,0 +1,2 @@
+net.quiwh.cbjs.kubejs.CBJSPlugin
+net.quiwh.cbjs.kubejs.CBJSProbeJS probejs

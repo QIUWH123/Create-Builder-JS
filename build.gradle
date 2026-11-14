@@ -1,0 +1,133 @@
+import groovy.json.JsonSlurper
+
+buildscript {
+    if (!gradle.startParameter.projectProperties.containsKey('offlineTarget')) {
+        repositories {
+            gradlePluginPortal()
+            maven { url = 'https://maven.neoforged.net/releases' }
+        }
+        dependencies {
+            classpath "net.neoforged.moddev:net.neoforged.moddev.gradle.plugin:${project.moddev_version}"
+        }
+    }
+}
+
+apply plugin: 'java-library'
+apply plugin: 'idea'
+
+idea.module {
+    downloadSources = true
+    downloadJavadoc = true
+}
+
+version = mod_version
+group = mod_group_id
+base { archivesName = mod_id }
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+repositories { mavenCentral() }
+
+def offlineTarget = providers.gradleProperty('offlineTarget').isPresent()
+if (offlineTarget) {
+    // Diagnostic compilation against the installed, named target. No transformed runtime.
+    def configFile = file('tools/local-target.json')
+    if (!configFile.isFile()) throw new GradleException('Prepare tools/local-target.json before offline target compilation.')
+    def localConfig = new JsonSlurper().parse(configFile)
+    def classpathFile = file(localConfig.classpath_file)
+    if (!classpathFile.isFile()) throw new GradleException('The configured target classpath does not exist.')
+    dependencies {
+        implementation files(classpathFile.text.trim().split(File.pathSeparator))
+        compileOnly files('libs/compile/cc-tweaked-1.21.1-forge-1.116.0.jar')
+    }
+    tasks.named('jar') {
+        doFirst { throw new GradleException('offlineTarget supports compile/check only. Use the NeoForge development build and runtime validation for a distributable JAR.') }
+    }
+} else {
+    apply plugin: 'net.neoforged.moddev'
+    neoForge {
+        version = neoforge_version
+        runs {
+            client { client() }
+            server { server(); programArgument '--nogui' }
+            gameTestServer { type = 'gameTestServer' }
+            configureEach {
+                systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+            }
+        }
+        mods {
+            "${mod_id}" { sourceSet sourceSets.main }
+        }
+    }
+    // Released 1.21.1 mods already use official names. Keep verified local jars private.
+    configurations { localRuntime }
+    configurations.runtimeClasspath.extendsFrom(configurations.localRuntime)
+    dependencies {
+        implementation fileTree(dir: 'libs/runtime', include: ['*.jar'])
+        // Create declares Flywheel and Ponder as required mod dependencies, but
+        // local file dependencies do not carry transitive metadata. Keep these
+        // client/runtime jars on every dev launch, including plain CBJS Client.
+        localRuntime files(
+                'libs/compile/flywheel-neoforge-1.21.1-1.0.6.jar',
+                'libs/compile/ponder-neoforge-1.0.82+mc1.21.1.jar')
+        compileOnly fileTree(dir: 'libs/compile', include: ['*.jar'])
+        compileOnly fileTree(dir: 'libs/optional', include: ['*.jar'])
+        if (providers.gradleProperty('devIntegrations').isPresent()) {
+            localRuntime fileTree(dir: 'libs/optional', include: ['*.jar'])
+        }
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 21
+    options.compilerArgs += ['-proc:none']
+}
+// Test sources exercise client and NeoForge APIs supplied by ModDev and declared compileOnly.
+if (offlineTarget) {
+    configurations.testCompileClasspath.extendsFrom(configurations.compileOnly)
+    configurations.testRuntimeClasspath.extendsFrom(configurations.compileOnly)
+} else {
+    configurations.testCompileClasspath.extendsFrom(configurations.compileOnly, configurations.modDevCompileDependencies)
+    configurations.testRuntimeClasspath.extendsFrom(configurations.compileOnly, configurations.modDevRuntimeDependencies)
+}
+tasks.withType(ProcessResources).configureEach { exclude '**/.DS_Store' }
+tasks.named('processResources') {
+    inputs.property 'mod_version', project.mod_version
+    filesMatching('META-INF/neoforge.mods.toml') {
+        expand(mod_version: project.mod_version)
+    }
+}
+tasks.named('jar') {
+    from('LICENSE')
+    manifest.attributes('Implementation-Title': mod_name, 'Implementation-Version': mod_version,
+            'Implementation-Vendor': mod_authors)
+}
+
+// Deterministic algorithms run without a game world; GameTests use runGameTestServer.
+tasks.named('test', Test) {
+    // These suites have main methods rather than framework annotations. Their JavaExec
+    // tasks below are required by test, so an empty framework scan is intentional.
+    failOnNoDiscoveredTests = false
+}
+[
+    testKineticLimits: 'KineticLimitsTest',
+    testRotationSpeedPolicy: 'RotationSpeedPolicyTest',
+    testCogwheelStateTracker: 'CogwheelStateTrackerTest',
+    testNetworkStressSnapshot: 'NetworkStressSnapshotTest',
+    testNetworkStressSnapshot: 'NetworkStressSnapshotTest',
+    testClientRegistration: 'ClientRegistrationTest',
+    testGearboxVariantAssets: 'GearboxVariantAssetsTest',
+    testNativeVisualRegistration: 'NativeVisualRegistrationTest'
+].each { taskName, testClass ->
+    tasks.register(taskName, JavaExec) {
+        dependsOn testClasses
+        classpath = sourceSets.test.runtimeClasspath
+        mainClass = switch (testClass) {
+            case 'ClientRegistrationTest' -> "net.quiwh.cbjs.kubejs.${testClass}"
+            case 'GearboxVariantAssetsTest' -> "net.quiwh.cbjs.kubejs.${testClass}"
+            case 'NativeVisualRegistrationTest' -> "net.quiwh.cbjs.content.${testClass}"
+            default -> "net.quiwh.cbjs.kinetics.${testClass}"
+        }
+    }
+    tasks.named('test') { dependsOn taskName }
+}

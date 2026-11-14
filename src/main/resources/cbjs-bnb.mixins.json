@@ -1,0 +1,19 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "net.quiwh.cbjs.compat.bnb.mixin",
+  "plugin": "net.quiwh.cbjs.compat.bnb.BnbChainMixinPlugin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "BnbChainCandidateMixin",
+    "BnbDriveTypeMixin",
+    "BnbFlangedCogwheelMixin",
+    "customchain.BnbChainDataMixin",
+    "customchain.BnbChainEntityMixin",
+    "customchain.BnbChainPacketMixin"
+  ],
+  "client": [],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

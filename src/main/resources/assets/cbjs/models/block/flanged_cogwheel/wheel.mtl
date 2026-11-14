@@ -1,0 +1,5 @@
+newmtl side
+map_Kd #side
+
+newmtl end
+map_Kd #end

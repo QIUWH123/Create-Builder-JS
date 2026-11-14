@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/block",
+  "loader": "neoforge:obj",
+  "model": "cbjs:models/block/flanged_cogwheel/small_shaftless.obj",
+  "flip_v": true,
+  "ambient_occlusion": true,
+  "textures": {
+    "side": "minecraft:block/spruce_planks",
+    "end": "minecraft:block/stripped_spruce_log_top",
+    "particle": "minecraft:block/stripped_spruce_log_top"
+  }
+}

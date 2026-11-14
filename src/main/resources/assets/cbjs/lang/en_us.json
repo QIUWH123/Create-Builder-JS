@@ -1,0 +1,9 @@
+{
+  "entity.cbjs.drive_rider": "Cogwheel Drive Handhold",
+  "cbjs.drive.first": "First wheel selected. Select another wheel, then click the first to close.",
+  "cbjs.drive.next": "Wheel selected. Click the first wheel to close the drive.",
+  "cbjs.drive.connected": "Cogwheel drive connected.",
+  "cbjs.drive.cancelled": "Drive selection cancelled.",
+  "cbjs.drive.invalid": "Invalid drive. Use free, exposed wheels in one clear plane and select them around the loop.",
+  "cbjs.drive.cost": "This drive requires %s matching items."
+}
