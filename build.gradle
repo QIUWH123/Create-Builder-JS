@@ -93,12 +93,15 @@ if (offlineTarget) {
 tasks.withType(ProcessResources).configureEach { exclude '**/.DS_Store' }
 tasks.named('processResources') {
     inputs.property 'mod_version', project.mod_version
+    inputs.property 'mod_license', project.mod_license
     filesMatching('META-INF/neoforge.mods.toml') {
-        expand(mod_version: project.mod_version)
+        expand(mod_version: project.mod_version, mod_license: project.mod_license)
     }
 }
 tasks.named('jar') {
     from('LICENSE')
+    from('THIRD_PARTY_NOTICES.md')
+    from('LICENSES') { into 'LICENSES' }
     manifest.attributes('Implementation-Title': mod_name, 'Implementation-Version': mod_version,
             'Implementation-Vendor': mod_authors)
 }
